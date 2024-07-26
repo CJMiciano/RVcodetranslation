@@ -1,0 +1,84 @@
+---
+title: "Anatomy of a Transmission Dynamic Model in R"
+output: html_document
+date: "2024-07-26"
+---
+
+```{r setup, include=FALSE}
+# Load Libraries Needed
+knitr::opts_chunk$set(echo = TRUE)
+library(deSolve)
+library(ggplot2)
+```
+
+## Write Model Equations
+```{r}
+
+my_model <- function(times,yinit,pars){
+	
+	with(as.list(c(yinit,pars)), {
+	
+		N  <- S + I + R
+		dS <- -beta*S*I/N 
+		dI <- beta*S*I/N - gamma*I
+		dR <- gamma*I 
+
+	return(list(c(dS, dI, dR)))})  #needs to be in same order of how it is written above
+	}
+```
+
+## Set Parameters
+```{r}
+#list your parameters
+beta=2.3
+gamma=1.1
+my_pars <- cbind(beta = 2.3, 
+                 gamma = 1.1) # combine all the parameters
+
+```
+
+## Set Time Frame
+```{r}
+start_time = 0 # start date (years)
+end_time = 25 # end date (years)
+my_times <- seq(start_time, end_time, by = 0.25) 
+#NOTE your time steps need ot match the time steps for your parameters
+```
+
+## Set Initial Conditions
+```{r}
+my_yinit <- c(S = 10000, I = 1, R = 0)
+```
+
+## Run the Model
+```{r}
+results <- as.data.frame(ode(y=my_yinit, times=my_times, func=my_model,
+	parms=my_pars, method='lsoda'))
+# solves the differential equations you wrote above, using the time frame, initial parameters, and parameters
+#lsoda default but can 
+```
+
+## Plot Results
+```{r}
+colors <- c('Susceptible'='black','Infected'='red', 'Recovered'='blue', 
+            'Total' = 'purple')
+ggplot(data=results) + 
+  geom_line(aes(x=time,y=S,col='Susceptible')) + 
+	geom_line(aes(x=time,y=I,col='Infected')) + 
+  geom_line(aes(x=time,y=R,col='Recovered')) +
+  geom_line(aes(x=time,y=S+I+R,col='Total')) +
+	scale_colour_manual(name="Legend",values=colors) +
+	xlab('Year') + ylab('Number of People') +
+  theme_bw()
+```
+
+
+
+
+
+
+
+
+
+
+
